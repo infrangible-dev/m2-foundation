@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<!--
+ * @author      Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Infrangible_Foundation::menu" title="Infrangible" module="Infrangible_Foundation" sortOrder="75" resource="Infrangible_Foundation::menu" />
+        <add id="Infrangible_Foundation::infrangible_solutions" title="Infrangible Solutions" module="Infrangible_Foundation" sortOrder="0" resource="Infrangible_Foundation::infrangible_solutions" action="infrangible_solutions/index/index" parent="Infrangible_Foundation::menu"/>
+    </menu>
+</config>

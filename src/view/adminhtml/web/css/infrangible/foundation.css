@@ -1,0 +1,58 @@
+/**
+ * @author      Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ */
+
+.infrangible-logo > div {
+    text-indent: 60px;
+    background-image: url("../../images/infrangible/logo_tab.png") !important;
+    background-repeat: no-repeat !important;
+    background-position: 14px 13px !important;
+}
+
+.admin__menu #menu-infrangible-foundation-menu > a:before {
+    content: '' !important;
+    background: url("../../images/infrangible/logo_menu.png") no-repeat center top;
+}
+
+.admin__menu #menu-infrangible-foundation-menu:hover > a:before {
+    background: url("../../images/infrangible/logo_menu_hover.png") no-repeat center top !important;
+}
+
+.admin__menu #menu-infrangible-foundation-menu._active > a:before {
+    background: url("../../images/infrangible/logo_menu_active.png") no-repeat center top;
+}
+
+.solutions-item-first, .solutions-item {
+    clear: both;
+    overflow: hidden;
+}
+
+.solutions-item {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.solutions-item-first h2, .solutions-item h2 {
+    margin-top: 15px;
+}
+
+.solutions-item-first .image, .solutions-item .image {
+    float: left;
+    width: 250px;
+    border-radius: 0 10px 10px 0;
+    margin-right: 10px;
+}
+
+.solutions-item .image {
+    margin-top: 10px;
+}
+
+.solutions-item-first .tags, .solutions-item .tags {
+    margin-top: 5px;
+}
+
+.all-solutions-link {
+    float: right;
+}

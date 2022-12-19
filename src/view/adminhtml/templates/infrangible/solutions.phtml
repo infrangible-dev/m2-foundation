@@ -1,0 +1,34 @@
+<?php
+/**
+ * @author      Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ */
+use Infrangible\Foundation\Block\Adminhtml\Solutions;
+/** @var Solutions $block */
+$arrayHelper = $block->getArrayHelper();
+?>
+
+<?php if ($block->hasTag()): ?>
+    <div class="all-solutions-link"><a href="<?php echo $block->getUrl('infrangible_solutions/index/index'); ?>"><?php echo __('All solutions'); ?></a></div>
+<?php endif; ?>
+<?php $firstItem = true; ?>
+<?php foreach ($block->getItems() as $item): ?>
+    <div class="<?php if ($firstItem): ?>solutions-item-first<?php else: ?>solutions-item<?php endif; ?>">
+        <img src="<?php echo trim($arrayHelper->getValue($item, 'enclosure:@attributes:url')); ?>" class="image" alt="<?php echo trim($arrayHelper->getValue($item, 'title')); ?>" />
+        <h2><?php echo trim($arrayHelper->getValue($item, 'title')); ?></h2>
+        <?php echo trim($arrayHelper->getValue($item, 'description')); ?>
+        <a href="<?php echo trim($arrayHelper->getValue($item, 'link')); ?>" target="_blank"><?php echo __('Read more'); ?></a>
+        <div class="tags">
+            <?php $firstTag = true; ?>
+            <?php $categories = $arrayHelper->getValue($item, 'category'); ?>
+            <?php if (! is_array($categories)): $categories = [$categories]; endif; ?>
+            <?php foreach ($categories as $tag): ?>
+                <?php if (! $firstTag): ?>|<?php endif; ?>
+                <span><a href="<?php echo $block->getUrl('infrangible_solutions/index/index', ['tag' => base64_encode($tag)]); ?>"><?php echo trim($tag); ?></a></span>
+                <?php $firstTag = false; ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php $firstItem = false; ?>
+<?php endforeach; ?>
