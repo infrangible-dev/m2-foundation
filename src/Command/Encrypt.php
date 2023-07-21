@@ -18,10 +18,10 @@ class Encrypt
     extends Command
 {
     /** command name */
-    const NAME = 'encryption:encrypt';
+    public const NAME = 'encryption:encrypt';
 
     /** option which value to encrypt */
-    const OPTION_VALUE = 'value';
+    public const OPTION_VALUE = 'value';
 
     /** @var EncryptorInterface */
     protected $encryptor;

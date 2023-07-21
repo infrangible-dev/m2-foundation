@@ -18,10 +18,10 @@ class Decrypt
     extends Command
 {
     /** command name */
-    const NAME = 'encryption:decrypt';
+    public const NAME = 'encryption:decrypt';
 
     /** option which value to encrypt */
-    const OPTION_VALUE = 'value';
+    public const OPTION_VALUE = 'value';
 
     /** @var EncryptorInterface */
     protected $encryptor;

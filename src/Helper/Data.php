@@ -125,7 +125,7 @@ class Data
             foreach ($this->getInstalledInfrangiblePackageVersions() as $projectName => $moduleVersion) {
                 $url = sprintf('release/versions/repository/%s', base64_encode($projectName));
 
-                $versions = preg_split('/,/', $restClient->get($url));
+                $versions = explode(',', $restClient->get($url));
 
                 natcasesort($versions);
 
@@ -152,9 +152,9 @@ class Data
                 $moduleVersion =
                     $this->arrayHelper->getValue($this->fullModuleList->getOne($moduleName), 'setup_version');
 
-                [, $packageName] = preg_split('/_/', $moduleName, 2);
+                [, $packageName] = explode('_', $moduleName, 2);
 
-                if (array_search($packageName, ['BackendWidget', 'Core', 'Foundation', 'Log', 'Run']) === false) {
+                if ( ! in_array($packageName, ['BackendWidget', 'Core', 'Foundation', 'Log', 'Run'])) {
                     $packageName = lcfirst($packageName);
                     $packageName = strtolower(trim(preg_replace('/([A-Z]|[0-9]+)/', '-$1', $packageName), '-'));
 
