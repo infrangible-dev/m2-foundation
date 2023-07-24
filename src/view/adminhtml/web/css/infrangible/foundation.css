@@ -11,6 +11,10 @@
     background-position: 14px 13px !important;
 }
 
+.infrangible-logo._show > div {
+    background-image: url("../../images/infrangible/logo_tab_active.png") !important;
+}
+
 .admin__menu #menu-infrangible-foundation-menu > a:before {
     content: '' !important;
     background: url("../../images/infrangible/logo_menu.png") no-repeat center top;
