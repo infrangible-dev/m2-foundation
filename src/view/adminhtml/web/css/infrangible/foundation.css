@@ -1,6 +1,6 @@
 /**
  * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 
@@ -28,35 +28,24 @@
     background: url("../../images/infrangible/logo_menu_active.png") no-repeat center top;
 }
 
-.solutions-item-first, .solutions-item {
-    clear: both;
-    overflow: hidden;
+.solution-table {
+    width: 100%;
+    display: table;
 }
 
-.solutions-item {
-    margin-top: 15px;
-    border-top: 1px solid #eee;
+.solution-table .solution-body {
+    display: table-row-group;
 }
 
-.solutions-item-first h2, .solutions-item h2 {
-    margin-top: 15px;
+.solution-table .solution-body .solution-head, .solution-table .solution-body .solution-row {
+    display: table-row;
 }
 
-.solutions-item-first .image, .solutions-item .image {
-    float: left;
-    width: 250px;
-    border-radius: 0 10px 10px 0;
-    margin-right: 10px;
+.solution-table .solution-body .solution-column {
+    display: table-cell;
+    padding: 0 5px;
 }
 
-.solutions-item .image {
-    margin-top: 10px;
-}
-
-.solutions-item-first .tags, .solutions-item .tags {
-    margin-top: 5px;
-}
-
-.all-solutions-link {
-    float: right;
+.solution-table .solution-body .solution-head .solution-column {
+    border-bottom: 1px solid #cccccc;
 }

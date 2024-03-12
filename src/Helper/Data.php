@@ -1,29 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Foundation\Helper;
 
 use Exception;
-use Magento\Backend\Model\Auth\Session;
-use Magento\Framework\App\Request\Http;
+use FeWeDev\Base\Arrays;
+use FeWeDev\Base\Json;
+use FeWeDev\Base\Variables;
+use FeWeDev\Xml\SimpleXml;
+use Magento\Framework\FlagManager;
+use Magento\Framework\Module\Dir;
+use Magento\Framework\Module\Dir\Reader;
 use Magento\Framework\Module\FullModuleList;
 use Pest;
 use Psr\Log\LoggerInterface;
-use Tofex\Help\Arrays;
-use Tofex\Help\Variables;
-use Tofex\Xml\SimpleXml;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Data
 {
     /** @var Arrays */
-    protected $arrayHelper;
+    protected $arrays;
 
     /** @var Variables */
-    protected $variableHelper;
+    protected $variables;
 
     /** @var SimpleXml */
     protected $simpleXml;
@@ -31,113 +35,127 @@ class Data
     /** @var LoggerInterface */
     protected $logging;
 
-    /** @var Http */
-    protected $request;
-
     /** @var FullModuleList */
     protected $fullModuleList;
 
-    /** @var Session */
-    protected $authSession;
+    /** @var Reader */
+    protected $moduleReader;
+
+    /** @var Json */
+    protected $json;
+
+    /** @var FlagManager */
+    protected $flagManager;
 
     /**
-     * @param Arrays          $arrayHelper
-     * @param Variables       $variableHelper
+     * @param Arrays          $arrays
+     * @param Variables       $variables
      * @param SimpleXml       $simpleXml
      * @param LoggerInterface $logging
-     * @param Http            $request
      * @param FullModuleList  $fullModuleList
-     * @param Session         $authSession
+     * @param Reader          $moduleReader
+     * @param Json            $json
+     * @param FlagManager     $flagManager
      */
     public function __construct(
-        Arrays $arrayHelper,
-        Variables $variableHelper,
+        Arrays $arrays,
+        Variables $variables,
         SimpleXml $simpleXml,
         LoggerInterface $logging,
-        Http $request,
         FullModuleList $fullModuleList,
-        Session $authSession)
-    {
-        $this->arrayHelper = $arrayHelper;
-        $this->variableHelper = $variableHelper;
-
+        Reader $moduleReader,
+        Json $json,
+        FlagManager $flagManager
+    ) {
+        $this->arrays = $arrays;
+        $this->variables = $variables;
         $this->simpleXml = $simpleXml;
         $this->logging = $logging;
-        $this->request = $request;
         $this->fullModuleList = $fullModuleList;
-        $this->authSession = $authSession;
+        $this->moduleReader = $moduleReader;
+        $this->json = $json;
+        $this->flagManager = $flagManager;
     }
 
     /**
      * @return array[]
      */
+    public function getLatestItems(): array
+    {
+        $result = [];
+
+        try {
+            $rssClient = new Pest('https://packagist.org');
+
+            $url = 'feeds/vendor.infrangible.rss';
+
+            $feedResult = $this->simpleXml->simpleXmlLoadString($rssClient->get($url));
+
+            $parsedResult = json_decode(json_encode($feedResult), true);
+
+            $items = $this->arrays->getValue($parsedResult, 'channel:item');
+
+            if ($this->arrays->isAssociative($items)) {
+                $items = [$items];
+            }
+
+            foreach ($items as $item) {
+                $title = $this->arrays->getValue($item, 'title');
+
+                if (!$this->variables->isEmpty($title) && preg_match('/(.*?)\s+\((.*?)\)/', $title, $matches)) {
+                    $item['name'] = $matches[1];
+                    $item['version'] = $matches[2];
+                }
+
+                $guid = $this->arrays->getValue($item, 'guid');
+
+                $result[$guid] = $item;
+            }
+        } catch (Exception $exception) {
+            $this->logging->error($exception);
+        }
+
+        return $result;
+    }
+
     public function getItems(): array
     {
         $items = [];
 
-        try {
-            $rssClient = new Pest('https://www.infrangible.dev');
+        $packageVersions = $this->flagManager->getFlagData('infrangible_foundation_package_versions');
+        $packageVersions = $this->variables->isEmpty($packageVersions) ? $this->getLatestItems() : $packageVersions;
 
-            $url = 'article/feed';
+        foreach ($packageVersions as $item) {
+            $name = $this->arrays->getValue($item, 'name');
+            $version = $this->arrays->getValue($item, 'version');
 
-            $tag = $this->request->getParam('tag');
-
-            if ( ! $this->variableHelper->isEmpty($tag)) {
-                $url .= sprintf('/tag/%s', $tag);
+            if ($this->variables->isEmpty($name) || $this->variables->isEmpty($version)) {
+                continue;
             }
 
-            $backendUser = $this->authSession->getUser();
+            if (!array_key_exists($name, $items)) {
+                $items[$name] = $item;
+            } else {
+                if (true === version_compare(
+                        $version,
+                        $this->arrays->getValue($items, sprintf('%s:version', $name)),
+                        '>'
+                    )) {
 
-            $locale = $backendUser->getInterfaceLocale();
-
-            if ( ! $this->variableHelper->isEmpty($locale)) {
-                $url .= sprintf('/lang/%s', $this->arrayHelper->getValue(explode('_', $locale), 0, 'en'));
+                    $items[$name] = $item;
+                }
             }
+        }
 
-            $result = $this->simpleXml->simpleXmlLoadString($rssClient->get($url));
+        $installedInfrangiblePackageVersions = $this->getInstalledInfrangiblePackageVersions();
 
-            $parsedResult = json_decode(json_encode($result), true);
+        foreach ($items as &$item) {
+            $name = $this->arrays->getValue($item, 'name');
 
-            $items = $this->arrayHelper->getValue($parsedResult, 'channel:item');
-
-            if ($this->arrayHelper->isAssociative($items)) {
-                $items = [$items];
-            }
-
-            $items = array_slice($items, 0, 8);
-        } catch (Exception $exception) {
-            $this->logging->error($exception);
+            $item['installed'] = $this->arrays->getValue($installedInfrangiblePackageVersions, $name);
         }
 
         return $items;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getLatestInfrangiblePackageVersions(): array
-    {
-        $composerData = [];
-
-        try {
-            $restClient = new Pest('https://composer.infrangible.dev');
-
-            foreach ($this->getInstalledInfrangiblePackageVersions() as $projectName => $moduleVersion) {
-                $url = sprintf('release/versions/repository/%s', base64_encode($projectName));
-
-                $versions = explode(',', $restClient->get($url));
-
-                natcasesort($versions);
-
-                $latestVersion = end($versions);
-
-                $composerData[ $projectName ] = $latestVersion;
-            }
-        } catch (Exception $exception) {
-            $this->logging->error($exception);
-        }
-
-        return $composerData;
     }
 
     /**
@@ -149,17 +167,32 @@ class Data
 
         foreach ($this->fullModuleList->getNames() as $moduleName) {
             if (preg_match('/^Infrangible_/', $moduleName)) {
-                $moduleVersion =
-                    $this->arrayHelper->getValue($this->fullModuleList->getOne($moduleName), 'setup_version');
+                $composerFile =
+                    sprintf('%s/../composer.json', $this->moduleReader->getModuleDir(Dir::MODULE_ETC_DIR, $moduleName));
+
+                $versionConfiguration = [];
+
+                if (file_exists($composerFile)) {
+                    $versionConfiguration = $this->json->decode(file_get_contents($composerFile));
+                } else {
+                    $composerFile = sprintf(
+                        '%s/../../composer.json',
+                        $this->moduleReader->getModuleDir(Dir::MODULE_ETC_DIR, $moduleName)
+                    );
+
+                    if (file_exists($composerFile)) {
+                        $versionConfiguration = $this->json->decode(file_get_contents($composerFile));
+                    }
+                }
+
+                $moduleVersion = $this->arrays->getValue($versionConfiguration, 'version');
 
                 [, $packageName] = explode('_', $moduleName, 2);
 
-                if ( ! in_array($packageName, ['BackendWidget', 'Core', 'Foundation', 'Log', 'Run'])) {
-                    $packageName = lcfirst($packageName);
-                    $packageName = strtolower(trim(preg_replace('/([A-Z]|[0-9]+)/', '-$1', $packageName), '-'));
+                $packageName = lcfirst($packageName);
+                $packageName = strtolower(trim(preg_replace('/([A-Z]|[0-9]+)/', '-$1', $packageName), '-'));
 
-                    $composerData[ sprintf('infrangible/m2-%s', $packageName) ] = $moduleVersion;
-                }
+                $composerData[sprintf('infrangible/m2-%s', $packageName)] = $moduleVersion;
             }
         }
 

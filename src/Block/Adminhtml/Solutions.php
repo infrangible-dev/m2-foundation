@@ -1,18 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Foundation\Block\Adminhtml;
 
-use Exception;
+use FeWeDev\Base\Arrays;
+use FeWeDev\Base\Variables;
+use Infrangible\Foundation\Helper\Data;
 use Magento\Backend\Block\Template;
 use Magento\Backend\Block\Template\Context;
 use Psr\Log\LoggerInterface;
-use Infrangible\Foundation\Helper\Data;
-use Tofex\Help\Arrays;
-use Tofex\Help\Variables;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Solutions
@@ -22,33 +23,33 @@ class Solutions
     protected $helper;
 
     /** @var Variables */
-    protected $variableHelper;
+    protected $variables;
 
     /** @var Arrays */
-    protected $arrayHelper;
+    protected $arrays;
 
     /** @var LoggerInterface */
     protected $logging;
 
     /**
-     * @param Context   $context
-     * @param Data      $helper
-     * @param Variables $variableHelper
-     * @param Arrays    $arrayHelper
-     * @param array     $data
+     * @param Context $context
+     * @param Data $helper
+     * @param Variables $variables
+     * @param Arrays $arrayHelper
+     * @param array $data
      */
     public function __construct(
-        Context $context,
-        Data $helper,
-        Variables $variableHelper,
-        Arrays $arrayHelper,
-        array $data = [])
+        Context           $context,
+        Data              $helper,
+        Variables         $variables,
+        Arrays            $arrayHelper,
+        array             $data = [])
     {
         parent::__construct($context, $data);
 
         $this->helper = $helper;
-        $this->variableHelper = $variableHelper;
-        $this->arrayHelper = $arrayHelper;
+        $this->variables = $variables;
+        $this->arrays = $arrayHelper;
 
         $this->logging = $context->getLogger();
     }
@@ -62,26 +63,10 @@ class Solutions
     }
 
     /**
-     * @return bool
-     */
-    public function hasTag(): bool
-    {
-        try {
-            $tag = $this->getRequest()->getParam('tag');
-        } catch (Exception $exception) {
-            $this->logging->error($exception);
-
-            $tag = null;
-        }
-
-        return ! $this->variableHelper->isEmpty($tag);
-    }
-
-    /**
      * @return Arrays
      */
-    public function getArrayHelper(): Arrays
+    public function getArrays(): Arrays
     {
-        return $this->arrayHelper;
+        return $this->arrays;
     }
 }

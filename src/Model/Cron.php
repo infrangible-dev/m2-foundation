@@ -1,35 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Foundation\Model;
 
 use Exception;
-use Magento\AdminNotification\Model\InboxFactory;
-use Pest;
-use Psr\Log\LoggerInterface;
-use Infrangible\Core\Helper\Database;
+use FeWeDev\Base\Arrays;
+use FeWeDev\Base\Json;
+use FeWeDev\Base\Variables;
 use Infrangible\Foundation\Helper\Data;
-use Tofex\Help\Arrays;
-use Tofex\Help\Json;
-use Tofex\Help\Variables;
+use Magento\AdminNotification\Model\InboxFactory;
+use Magento\Framework\FlagManager;
+use Psr\Log\LoggerInterface;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Cron
 {
     /** @var Variables */
-    protected $variableHelper;
+    protected $variables;
 
     /** @var Arrays */
-    protected $arrayHelper;
+    protected $arrays;
 
     /** @var Json */
-    protected $jsonHelper;
+    protected $json;
 
-    /** @var Database */
-    protected $databaseHelper;
+    /** @var FlagManager */
+    protected $flagManager;
 
     /** @var Data */
     protected $helper;
@@ -41,27 +42,27 @@ class Cron
     protected $inboxFactory;
 
     /**
-     * @param Variables       $variableHelper
-     * @param Arrays          $arrayHelper
-     * @param Json            $jsonHelper
-     * @param Database        $databaseHelper
+     * @param Variables       $variables
+     * @param Arrays          $arrays
+     * @param Json            $json
+     * @param FlagManager     $flagManager
      * @param Data            $helper
      * @param LoggerInterface $logging
      * @param InboxFactory    $inboxFactory
      */
     public function __construct(
-        Variables $variableHelper,
-        Arrays $arrayHelper,
-        Json $jsonHelper,
-        Database $databaseHelper,
+        Variables $variables,
+        Arrays $arrays,
+        Json $json,
+        FlagManager $flagManager,
         Data $helper,
         LoggerInterface $logging,
-        InboxFactory $inboxFactory)
-    {
-        $this->variableHelper = $variableHelper;
-        $this->arrayHelper = $arrayHelper;
-        $this->jsonHelper = $jsonHelper;
-        $this->databaseHelper = $databaseHelper;
+        InboxFactory $inboxFactory
+    ) {
+        $this->variables = $variables;
+        $this->arrays = $arrays;
+        $this->json = $json;
+        $this->flagManager = $flagManager;
         $this->helper = $helper;
 
         $this->logging = $logging;
@@ -71,96 +72,45 @@ class Cron
     /**
      * @throws Exception
      */
-    public function checkSolutions()
+    public function checkUpdate()
     {
-        $dateQuery = $this->databaseHelper->select($this->databaseHelper->getTableName('core_config_data'), ['value']);
+        $lastSolutionDate = $this->flagManager->getFlagData('infrangible_foundation_solution_date');
+        $packageVersions = $this->flagManager->getFlagData('infrangible_foundation_package_versions');
 
-        $dateQuery->where('path = ?', 'infrangible_foundation/solution/date');
+        $lastSolutionDate = $this->variables->isEmpty($lastSolutionDate) ? time() : $lastSolutionDate;
 
-        $dateQueryResult = $this->databaseHelper->fetchOne($dateQuery);
+        $packageVersions = $this->variables->isEmpty($packageVersions) ? [] : $packageVersions;
 
-        $lastSolutionDate = $this->variableHelper->isEmpty($dateQueryResult) ? time() : $dateQueryResult;
-
-        $latestTime = 0;
+        $latestTime = $lastSolutionDate;
         $latestItem = [];
 
-        foreach ($this->helper->getItems() as $item) {
-            $pubDate = strtotime(trim($this->arrayHelper->getValue($item, 'pubDate')));
+        foreach ($this->helper->getLatestItems() as $guid => $item) {
+            $pubDate = strtotime(trim($this->arrays->getValue($item, 'pubDate')));
 
             if ($pubDate > $latestTime) {
                 $latestTime = $pubDate;
                 $latestItem = $item;
             }
+
+            $packageVersions[$guid] = $item;
         }
 
         if ($latestTime > $lastSolutionDate) {
             $model = $this->inboxFactory->create();
 
-            $model->addNotice(sprintf('%s: %s', __('New Infrangible Solution'),
-                trim($this->arrayHelper->getValue($latestItem, 'title'))),
-                trim($this->arrayHelper->getValue($latestItem, 'description')),
-                trim($this->arrayHelper->getValue($latestItem, 'link')), false);
-
-            $this->databaseHelper->createTableData($this->databaseHelper->getDefaultConnection(),
-                $this->databaseHelper->getTableName('core_config_data'), [
-                    'scope'    => 'default',
-                    'scope_id' => 0,
-                    'path'     => 'infrangible_foundation/solution/date',
-                    'value'    => $latestTime
-                ], true);
-        }
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function checkPackages()
-    {
-        $versionQuery =
-            $this->databaseHelper->select($this->databaseHelper->getTableName('core_config_data'), ['value']);
-
-        $versionQuery->where('path = ?', 'infrangible_foundation/package/versions');
-
-        $versionQueryResult = $this->databaseHelper->fetchOne($versionQuery);
-
-        $previousCheckInfrangiblePackageVersions =
-            $this->variableHelper->isEmpty($versionQueryResult) ? $this->helper->getInstalledInfrangiblePackageVersions() :
-                $this->jsonHelper->decode($versionQueryResult);
-
-        $latestInfrangiblePackageVersions = $this->helper->getLatestInfrangiblePackageVersions();
-
-        foreach ($previousCheckInfrangiblePackageVersions as $packageName => $packageVersion) {
-            $latestVersion = $this->arrayHelper->getValue($latestInfrangiblePackageVersions, $packageName);
-
-            if (strnatcasecmp($latestVersion, $packageVersion) > 0) {
-                $description = null;
-
-                try {
-                    $restClient = new Pest('https://composer.infrangible.dev');
-
-                    $url = sprintf('release/version/repository/%s/version/%s', base64_encode($packageName),
-                        base64_encode($latestVersion));
-
-                    $data = $this->jsonHelper->decode($restClient->get($url));
-
-                    $description = $this->arrayHelper->getValue($data, 'description');
-                } catch (Exception $exception) {
-                    $this->logging->error($exception);
-                }
-
-                $model = $this->inboxFactory->create();
-
-                $model->addNotice(sprintf('%s - %s: %s', __('Infrangible Solution'), $description, __('New Version')),
-                    sprintf('%s: %s', __('New Version'), $latestVersion), null, false);
-            }
+            $model->addNotice(
+                sprintf(
+                    '%s: %s',
+                    __('New Infrangible Solution'),
+                    trim($this->arrays->getValue($latestItem, 'title'))
+                ),
+                trim($this->arrays->getValue($latestItem, 'description')),
+                trim($this->arrays->getValue($latestItem, 'link')),
+                false
+            );
         }
 
-        $this->databaseHelper->createTableData($this->databaseHelper->getDefaultConnection(),
-            $this->databaseHelper->getTableName('core_config_data'), [
-                'scope'    => 'default',
-                'scope_id' => 0,
-                'path'     => 'infrangible_foundation/package/versions',
-                'value'    => $this->jsonHelper->encode($latestInfrangiblePackageVersions)
-            ], true);
+        $this->flagManager->saveFlag('infrangible_foundation_solution_date', $latestTime);
+        $this->flagManager->saveFlag('infrangible_foundation_package_versions', $packageVersions);
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Foundation\Controller\Adminhtml\Index;
 
 use Magento\Backend\App\Action;
@@ -9,7 +11,7 @@ use Magento\Framework\View\Result\PageFactory;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2022 Softwareentwicklung Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Index
