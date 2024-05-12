@@ -24,7 +24,7 @@ $arrays = $block->getArrays();
             <div class="solution-column">&nbsp;</div>
         </div>
         <?php foreach ($block->getItems() as $item): ?>
-            <div class="solution-row">
+            <div class="solution-row solution-status-<?php echo $arrays->getValue($item, 'status'); ?>">
                 <div class="solution-column"><?php echo $arrays->getValue($item, 'name'); ?></div>
                 <div class="solution-column"><?php echo $arrays->getValue($item, 'description'); ?></div>
                 <div class="solution-column"><?php echo $arrays->getValue($item, 'version'); ?></div>

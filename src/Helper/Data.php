@@ -152,7 +152,12 @@ class Data
         foreach ($items as &$item) {
             $name = $this->arrays->getValue($item, 'name');
 
-            $item['installed'] = $this->arrays->getValue($installedInfrangiblePackageVersions, $name);
+            $installedVersion = $this->arrays->getValue($installedInfrangiblePackageVersions, $name);
+            $version = $this->arrays->getValue($item, 'version');
+
+            $item['installed'] = $installedVersion;
+            $item['status'] = $this->variables->isEmpty($installedVersion) ? 'missing' :
+                (version_compare($installedVersion, $version) >= 0 ? 'ok' : 'outdated');
         }
 
         return $items;

@@ -41,11 +41,35 @@
     display: table-row;
 }
 
+.solution-table .solution-body .solution-head {
+    font-weight: 800;
+}
+
+.solution-table .solution-body .solution-row {
+    font-weight: 600;
+}
+
+.solution-table .solution-body .solution-row.solution-status-missing {
+    color: #888;
+}
+
+.solution-table .solution-body .solution-row.solution-status-ok {
+    color: #080;
+}
+
+.solution-table .solution-body .solution-row.solution-status-outdated {
+    color: #b00;
+}
+
 .solution-table .solution-body .solution-column {
     display: table-cell;
-    padding: 0 5px;
+    padding: 5px;
 }
 
 .solution-table .solution-body .solution-head .solution-column {
     border-bottom: 1px solid #cccccc;
+}
+
+.solution-table .solution-body .solution-row .solution-column {
+    border-bottom: 1px solid #eeeeee;
 }
