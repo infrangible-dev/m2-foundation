@@ -41,15 +41,6 @@ class Cron
     /** @var InboxFactory */
     protected $inboxFactory;
 
-    /**
-     * @param Variables       $variables
-     * @param Arrays          $arrays
-     * @param Json            $json
-     * @param FlagManager     $flagManager
-     * @param Data            $helper
-     * @param LoggerInterface $logging
-     * @param InboxFactory    $inboxFactory
-     */
     public function __construct(
         Variables $variables,
         Arrays $arrays,
@@ -72,45 +63,86 @@ class Cron
     /**
      * @throws Exception
      */
-    public function checkUpdate()
+    public function checkUpdate(): void
     {
-        $lastSolutionDate = $this->flagManager->getFlagData('infrangible_foundation_solution_date');
-        $packageVersions = $this->flagManager->getFlagData('infrangible_foundation_package_versions');
+        $availablePackages = $this->flagManager->getFlagData('infrangible_foundation_available_packages');
 
-        $lastSolutionDate = $this->variables->isEmpty($lastSolutionDate) ? time() : $lastSolutionDate;
+        if ($availablePackages === null) {
+            $availablePackages = $this->helper->getAvailablePackages();
+        }
 
-        $packageVersions = $this->variables->isEmpty($packageVersions) ? [] : $packageVersions;
+        $lastCheckTime = $this->flagManager->getFlagData('infrangible_foundation_check_time');
 
-        $latestTime = $lastSolutionDate;
-        $latestItem = [];
+        if ($lastCheckTime === null) {
+            $lastCheckTime = time();
+        }
 
-        foreach ($this->helper->getLatestItems() as $guid => $item) {
-            $pubDate = strtotime(trim($this->arrays->getValue($item, 'pubDate')));
+        $updatePackageNames = $this->helper->getUpdatedPackages($lastCheckTime);
 
-            if ($pubDate > $latestTime) {
-                $latestTime = $pubDate;
-                $latestItem = $item;
+        $this->flagManager->saveFlag(
+            'infrangible_foundation_check_time',
+            time()
+        );
+
+        foreach ($updatePackageNames as $packageName) {
+            if (array_key_exists(
+                $packageName,
+                $availablePackages
+            )) {
+                $availablePackage = $availablePackages[ $packageName ];
+
+                $previousUpdateTime = strtotime($availablePackage[ 'time' ]);
+            } else {
+                $previousUpdateTime = 0;
             }
 
-            $packageVersions[$guid] = $item;
+            $availablePackage = $this->helper->getAvailablePackage($packageName);
+
+            $newUpdateTime = strtotime($availablePackage[ 'time' ]);
+
+            $availablePackages[ $packageName ] = $availablePackage;
+
+            if ($newUpdateTime > $previousUpdateTime) {
+                $model = $this->inboxFactory->create();
+
+                $model->addNotice(
+                    sprintf(
+                        '%s: %s',
+                        __('New Infrangible Solution'),
+                        trim(
+                            $this->arrays->getValue(
+                                $availablePackage,
+                                'name'
+                            )
+                        )
+                    ),
+                    sprintf(
+                        '%s: %s',
+                        __('New Version'),
+                        trim(
+                            $this->arrays->getValue(
+                                $availablePackage,
+                                'version'
+                            )
+                        )
+                    ),
+                    sprintf(
+                        'https://packagist.org/packages/%s',
+                        trim(
+                            $this->arrays->getValue(
+                                $availablePackage,
+                                'name'
+                            )
+                        )
+                    ),
+                    false
+                );
+            }
         }
 
-        if ($latestTime > $lastSolutionDate) {
-            $model = $this->inboxFactory->create();
-
-            $model->addNotice(
-                sprintf(
-                    '%s: %s',
-                    __('New Infrangible Solution'),
-                    trim($this->arrays->getValue($latestItem, 'title'))
-                ),
-                trim($this->arrays->getValue($latestItem, 'description')),
-                trim($this->arrays->getValue($latestItem, 'link')),
-                false
-            );
-        }
-
-        $this->flagManager->saveFlag('infrangible_foundation_solution_date', $latestTime);
-        $this->flagManager->saveFlag('infrangible_foundation_package_versions', $packageVersions);
+        $this->flagManager->saveFlag(
+            'infrangible_foundation_available_packages',
+            $availablePackages
+        );
     }
 }

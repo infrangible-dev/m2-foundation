@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
+use Infrangible\Foundation\Block\Adminhtml\Solutions;
+
 /**
  * @author      Andreas Knollmann
  * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-use Infrangible\Foundation\Block\Adminhtml\Solutions;
 
 /** @var Solutions $block */
 $arrays = $block->getArrays();
@@ -16,8 +17,8 @@ $arrays = $block->getArrays();
 <div class="solution-table">
     <div class="solution-body">
         <div class="solution-head">
+            <div class="solution-column"><?php echo __('Key'); ?></div>
             <div class="solution-column"><?php echo __('Name'); ?></div>
-            <div class="solution-column"><?php echo __('Description'); ?></div>
             <div class="solution-column"><?php echo __('Version'); ?></div>
             <div class="solution-column"><?php echo __('Date'); ?></div>
             <div class="solution-column"><?php echo __('Installed'); ?></div>
@@ -28,9 +29,9 @@ $arrays = $block->getArrays();
                 <div class="solution-column"><?php echo $arrays->getValue($item, 'name'); ?></div>
                 <div class="solution-column"><?php echo $arrays->getValue($item, 'description'); ?></div>
                 <div class="solution-column"><?php echo $arrays->getValue($item, 'version'); ?></div>
-                <div class="solution-column"><?php echo $block->formatDate($arrays->getValue($item, 'pubDate')); ?> <?php echo $block->formatTime($arrays->getValue($item, 'pubDate')); ?></div>
+                <div class="solution-column"><?php echo $block->formatDate($arrays->getValue($item, 'time'), IntlDateFormatter::MEDIUM); ?> <?php echo $block->formatTime($arrays->getValue($item, 'time')); ?></div>
                 <div class="solution-column"><?php echo $arrays->getValue($item, 'installed'); ?></div>
-                <div class="solution-column"><a href="<?php echo $arrays->getValue($item, 'link'); ?>" target="_blank"><?php echo __('Read more'); ?></a></div>
+                <div class="solution-column"><a href="https://packagist.org/packages/<?php echo $arrays->getValue($item, 'name'); ?>" target="_blank"><?php echo __('Read more'); ?></a></div>
             </div>
         <?php endforeach; ?>
     </div>

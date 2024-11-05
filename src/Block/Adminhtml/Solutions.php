@@ -16,8 +16,7 @@ use Psr\Log\LoggerInterface;
  * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class Solutions
-    extends Template
+class Solutions extends Template
 {
     /** @var Data */
     protected $helper;
@@ -31,21 +30,17 @@ class Solutions
     /** @var LoggerInterface */
     protected $logging;
 
-    /**
-     * @param Context $context
-     * @param Data $helper
-     * @param Variables $variables
-     * @param Arrays $arrayHelper
-     * @param array $data
-     */
     public function __construct(
-        Context           $context,
-        Data              $helper,
-        Variables         $variables,
-        Arrays            $arrayHelper,
-        array             $data = [])
-    {
-        parent::__construct($context, $data);
+        Context $context,
+        Data $helper,
+        Variables $variables,
+        Arrays $arrayHelper,
+        array $data = []
+    ) {
+        parent::__construct(
+            $context,
+            $data
+        );
 
         $this->helper = $helper;
         $this->variables = $variables;
@@ -62,9 +57,6 @@ class Solutions
         return $this->helper->getItems();
     }
 
-    /**
-     * @return Arrays
-     */
     public function getArrays(): Arrays
     {
         return $this->arrays;
