@@ -250,8 +250,6 @@ class Data
                     $moduleDir
                 );
 
-                $versionConfiguration = [];
-
                 if (file_exists($composerFile)) {
                     $versionConfiguration = $this->json->decode(file_get_contents($composerFile));
                 } else {
@@ -263,12 +261,7 @@ class Data
                     if (file_exists($composerFile)) {
                         $versionConfiguration = $this->json->decode(file_get_contents($composerFile));
                     } else {
-                        if (strpos(
-                                $moduleDir,
-                                'app/code'
-                            ) !== false) {
-                            $versionConfiguration[ 'version' ] = 'dev';
-                        }
+                        continue;
                     }
                 }
 
@@ -277,28 +270,12 @@ class Data
                     'version'
                 );
 
-                [, $packageName] = explode(
-                    '_',
-                    $moduleName,
-                    2
+                $packageName = $this->arrays->getValue(
+                    $versionConfiguration,
+                    'name'
                 );
 
-                $packageName = lcfirst($packageName);
-                $packageName = strtolower(
-                    trim(
-                        preg_replace(
-                            '/([A-Z]|[0-9]+)/',
-                            '-$1',
-                            $packageName
-                        ),
-                        '-'
-                    )
-                );
-
-                $composerData[ sprintf(
-                    'infrangible/m2-%s',
-                    $packageName
-                ) ] = $moduleVersion;
+                $composerData[ $packageName ] = $moduleVersion;
             }
         }
 
