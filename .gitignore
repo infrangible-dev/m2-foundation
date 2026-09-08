@@ -1,4 +1,6 @@
 /.idea/
+/app/etc/
 /generated/
+/pub/
 /var/
 /vendor/
