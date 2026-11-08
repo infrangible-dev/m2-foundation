@@ -2,28 +2,33 @@
 
 declare(strict_types=1);
 
+/**
+ * @author      Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2026 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ */
+
 namespace Infrangible\Foundation\Controller\Adminhtml\Index;
 
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
+use Magento\Backend\Model\View\Result\Page as BackendPage;
+use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\View\Result\PageFactory;
 
 /**
- * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
- * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ * Shows the list of Infrangible solutions.
  */
-class Index
-    extends Action
+class Index extends Action implements HttpGetActionInterface
 {
+    public const ADMIN_RESOURCE = 'Infrangible_Foundation::infrangible_solutions';
+
     /** @var PageFactory */
-    protected $resultPageFactory;
+    protected PageFactory $resultPageFactory;
 
     /**
-     * Index constructor.
-     *
-     * @param Context     $context
+     * @param Context $context
      * @param PageFactory $resultPageFactory
      */
     public function __construct(Context $context, PageFactory $resultPageFactory)
@@ -34,22 +39,19 @@ class Index
     }
 
     /**
-     * @return ResultInterface
+     * @inheritDoc
      */
     public function execute(): ResultInterface
     {
         $resultPage = $this->resultPageFactory->create();
 
+        // the page factory is declared to return the frontend page, in the admin it creates the backend page
+        if ($resultPage instanceof BackendPage) {
+            $resultPage->setActiveMenu('Infrangible_Foundation::infrangible_solutions');
+        }
+
         $resultPage->getConfig()->getTitle()->prepend(__('Infrangible Solutions'));
 
         return $resultPage;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function _isAllowed(): bool
-    {
-        return $this->_authorization->isAllowed('Infrangible_Foundation::infrangible_solutions');
     }
 }

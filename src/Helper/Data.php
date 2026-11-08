@@ -2,344 +2,188 @@
 
 declare(strict_types=1);
 
+/**
+ * @author      Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2026 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ */
+
 namespace Infrangible\Foundation\Helper;
 
 use Exception;
-use FeWeDev\Base\Arrays;
-use FeWeDev\Base\Json;
-use FeWeDev\Base\Variables;
-use FeWeDev\Xml\SimpleXml;
+use Infrangible\Foundation\Model\InstalledPackages;
+use Infrangible\Foundation\Model\Packagist;
 use Magento\Framework\FlagManager;
-use Magento\Framework\Module\Dir;
-use Magento\Framework\Module\Dir\Reader;
-use Magento\Framework\Module\FullModuleList;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
- * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2024 Softwareentwicklung Andreas Knollmann
- * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ * Caches the Infrangible packages available on Packagist and compares them with the installed packages.
  */
 class Data
 {
-    /** @var Arrays */
-    protected $arrays;
+    public const FLAG_AVAILABLE_PACKAGES = 'infrangible_foundation_available_packages';
 
-    /** @var Variables */
-    protected $variables;
+    public const STATUS_OK = 'ok';
 
-    /** @var SimpleXml */
-    protected $simpleXml;
+    public const STATUS_OUTDATED = 'outdated';
 
-    /** @var LoggerInterface */
-    protected $logging;
+    public const STATUS_MISSING = 'missing';
 
-    /** @var FullModuleList */
-    protected $fullModuleList;
+    /** order of the statuses in the list: outdated packages first, missing packages last */
+    public const STATUS_ORDER = [self::STATUS_OUTDATED => 0, self::STATUS_OK => 1, self::STATUS_MISSING => 2];
 
-    /** @var Reader */
-    protected $moduleReader;
+    /** @var Packagist */
+    protected Packagist $packagist;
 
-    /** @var Json */
-    protected $json;
+    /** @var InstalledPackages */
+    protected InstalledPackages $installedPackages;
 
     /** @var FlagManager */
-    protected $flagManager;
+    protected FlagManager $flagManager;
 
+    /** @var LoggerInterface */
+    protected LoggerInterface $logging;
+
+    /**
+     * @param Packagist $packagist
+     * @param InstalledPackages $installedPackages
+     * @param FlagManager $flagManager
+     * @param LoggerInterface $logging
+     */
     public function __construct(
-        Arrays $arrays,
-        Variables $variables,
-        SimpleXml $simpleXml,
-        LoggerInterface $logging,
-        FullModuleList $fullModuleList,
-        Reader $moduleReader,
-        Json $json,
-        FlagManager $flagManager
+        Packagist $packagist,
+        InstalledPackages $installedPackages,
+        FlagManager $flagManager,
+        LoggerInterface $logging
     ) {
-        $this->arrays = $arrays;
-        $this->variables = $variables;
-        $this->simpleXml = $simpleXml;
-        $this->logging = $logging;
-        $this->fullModuleList = $fullModuleList;
-        $this->moduleReader = $moduleReader;
-        $this->json = $json;
+        $this->packagist = $packagist;
+        $this->installedPackages = $installedPackages;
         $this->flagManager = $flagManager;
+        $this->logging = $logging;
     }
 
+    /**
+     * Returns the cached packages with installed version and status.
+     *
+     * Outdated packages come first and missing packages last, each group sorted by release time, newest first.
+     *
+     * @return array<int, array{name: string, description: string, version: string, time: string, installed: ?string,
+     *     status: string}>
+     */
     public function getItems(): array
     {
-        $items = $this->getAvailablePackages();
+        $installedVersions = $this->installedPackages->getVersions();
 
-        $installedInfrangiblePackageVersions = $this->getInstalledInfrangiblePackageVersions();
+        $items = [];
 
-        foreach ($items as &$item) {
-            $name = $this->arrays->getValue(
-                $item,
-                'name'
+        foreach ($this->getCachedPackages() ?? [] as $packageName => $package) {
+            $installedVersion = $installedVersions[ $packageName ] ?? null;
+
+            $package[ 'installed' ] = $installedVersion;
+            $package[ 'status' ] = $this->getStatus(
+                $installedVersion,
+                $package[ 'version' ]
             );
 
-            $installedVersion = $this->arrays->getValue(
-                $installedInfrangiblePackageVersions,
-                $name
-            );
-            $version = $this->arrays->getValue(
-                $item,
-                'version'
-            );
-
-            $item[ 'installed' ] = $installedVersion;
-            $item[ 'status' ] = $this->variables->isEmpty($installedVersion) ? 'missing' :
-                ($installedVersion === 'dev' || version_compare(
-                    $installedVersion,
-                    $version
-                ) >= 0 ? 'ok' : 'outdated');
+            $items[] = $package;
         }
 
         usort(
             $items,
-            function (array $package1, array $package2) {
-                $status1 = $this->arrays->getValue(
-                    $package1,
-                    'status'
-                );
-                $status2 = $this->arrays->getValue(
-                    $package2,
-                    'status'
-                );
-
-                if ($status1 === 'missing' && $status2 !== 'missing') {
-                    return 1;
-                }
-                if ($status1 !== 'missing' && $status2 === 'missing') {
-                    return -1;
-                }
-
-                if ($status1 === 'outdated' && $status2 !== 'outdated') {
-                    return -1;
-                }
-                if ($status1 !== 'outdated' && $status2 === 'outdated') {
-                    return 1;
-                }
-
-                $time1 = strtotime(
-                    $this->arrays->getValue(
-                        $package1,
-                        'time'
-                    )
-                );
-                $time2 = strtotime(
-                    $this->arrays->getValue(
-                        $package2,
-                        'time'
-                    )
-                );
-
-                return $time2 <=> $time1;
+            function (array $item1, array $item2) {
+                return [static::STATUS_ORDER[ $item1[ 'status' ] ], strtotime($item2[ 'time' ]) ?: 0] <=>
+                    [static::STATUS_ORDER[ $item2[ 'status' ] ], strtotime($item1[ 'time' ]) ?: 0];
             }
         );
 
         return $items;
     }
 
-    public function getAvailablePackages(): array
+    /**
+     * Compares the installed with the available version.
+     *
+     * @param string|null $installedVersion
+     * @param string $availableVersion
+     * @return string one of the STATUS_* constants
+     */
+    public function getStatus(?string $installedVersion, string $availableVersion): string
     {
-        $availablePackages = $this->flagManager->getFlagData('infrangible_foundation_available_packages');
-
-        if ($availablePackages !== null) {
-            return $availablePackages;
+        if ($installedVersion === null || $installedVersion === '') {
+            return static::STATUS_MISSING;
         }
 
-        $apiClient = new \PestJSON('https://packagist.org');
-
-        $availablePackages = [];
-
-        try {
-            /** @var array $apiResult */
-            $apiResult = $apiClient->get('packages/list.json?vendor=infrangible');
-
-            $packageNames = $this->arrays->getValue(
-                $apiResult,
-                'packageNames'
-            );
-
-            foreach ($packageNames as $packageName) {
-                $availablePackages[ $packageName ] = $this->getAvailablePackage($packageName);
-            }
-        } catch (Exception $exception) {
-            $this->logging->error($exception);
+        // development installs, for example "dev-master" from a VCS or path repository
+        if ($installedVersion === 'dev' || str_starts_with($installedVersion, 'dev-')) {
+            return static::STATUS_OK;
         }
 
-        ksort($availablePackages);
+        return version_compare(
+            ltrim($installedVersion, 'v'),
+            ltrim($availableVersion, 'v'),
+            '>='
+        ) ? static::STATUS_OK : static::STATUS_OUTDATED;
+    }
+
+    /**
+     * Returns the cached packages or null if they have not been loaded yet.
+     *
+     * @return array<string, array{name: string, description: string, version: string, time: string}>|null
+     */
+    public function getCachedPackages(): ?array
+    {
+        $packages = $this->flagManager->getFlagData(static::FLAG_AVAILABLE_PACKAGES);
+
+        return is_array($packages) ? $packages : null;
+    }
+
+    /**
+     * Stores the packages in the cache.
+     *
+     * @param array $packages package name => name, description, version and time of the latest release
+     * @phpstan-param array<string, array{name: string, description: string, version: string, time: string}> $packages
+     * @return void
+     */
+    public function saveCachedPackages(array $packages): void
+    {
+        ksort($packages);
 
         $this->flagManager->saveFlag(
-            'infrangible_foundation_available_packages',
-            $availablePackages
+            static::FLAG_AVAILABLE_PACKAGES,
+            $packages
         );
-
-        return $availablePackages;
-    }
-
-    public function getAvailablePackage(string $packageName): array
-    {
-        $apiClient = new \PestJSON('https://packagist.org');
-
-        /** @var array $apiResult */
-        $apiResult = $apiClient->get(
-            sprintf(
-                'packages/%s.json',
-                $packageName
-            )
-        );
-
-        $versions = $this->arrays->getValue(
-            $apiResult,
-            'package:versions'
-        );
-
-        usort(
-            $versions,
-            function (array $version1, array $version2) {
-                return version_compare(
-                    $version1[ 'version' ],
-                    $version2[ 'version' ]
-                );
-            }
-        );
-
-        $version = end($versions);
-
-        return [
-            'name'        => $this->arrays->getValue(
-                $version,
-                'name'
-            ),
-            'description' => $this->arrays->getValue(
-                $version,
-                'description'
-            ),
-            'version'     => $this->arrays->getValue(
-                $version,
-                'version'
-            ),
-            'time'        => $this->arrays->getValue(
-                $version,
-                'time'
-            )
-        ];
     }
 
     /**
-     * @return string[]
+     * Loads all packages from Packagist and caches them.
+     *
+     * A package that cannot be loaded keeps its cached data.
+     *
+     * @return array<string, array{name: string, description: string, version: string, time: string}>
+     * @throws RuntimeException if the package list cannot be loaded
      */
-    public function getInstalledInfrangiblePackageVersions(): array
+    public function refreshPackages(): array
     {
-        $composerData = [];
+        $cachedPackages = $this->getCachedPackages() ?? [];
 
-        foreach ($this->fullModuleList->getNames() as $moduleName) {
-            if (preg_match(
-                '/^Infrangible_/',
-                $moduleName
-            )) {
-                $moduleDir = $this->moduleReader->getModuleDir(
-                    Dir::MODULE_ETC_DIR,
-                    $moduleName
-                );
+        $packages = [];
 
-                $composerFile = sprintf(
-                    '%s/../composer.json',
-                    $moduleDir
-                );
+        foreach ($this->packagist->getPackageNames() as $packageName) {
+            try {
+                $packages[ $packageName ] = $this->packagist->getPackage($packageName);
+            } catch (Exception $exception) {
+                $this->logging->error($exception);
 
-                if (file_exists($composerFile)) {
-                    $versionConfiguration = $this->json->decode(file_get_contents($composerFile));
-                } else {
-                    $composerFile = sprintf(
-                        '%s/../../composer.json',
-                        $moduleDir
-                    );
-
-                    if (file_exists($composerFile)) {
-                        $versionConfiguration = $this->json->decode(file_get_contents($composerFile));
-                    } else {
-                        continue;
-                    }
+                if (array_key_exists($packageName, $cachedPackages)) {
+                    $packages[ $packageName ] = $cachedPackages[ $packageName ];
                 }
-
-                $moduleVersion = $this->arrays->getValue(
-                    $versionConfiguration,
-                    'version'
-                );
-
-                $packageName = $this->arrays->getValue(
-                    $versionConfiguration,
-                    'name'
-                );
-
-                $composerData[ $packageName ] = $moduleVersion;
             }
         }
 
-        return $composerData;
-    }
+        ksort($packages);
 
-    /**
-     * @return string[]
-     */
-    public function getUpdatedPackages(int $lastCheckTime): array
-    {
-        $result = [];
+        $this->saveCachedPackages($packages);
 
-        try {
-            $rssClient = new \Pest('https://packagist.org');
-
-            $url = 'feeds/vendor.infrangible.rss';
-
-            $feedResult = $this->simpleXml->simpleXmlLoadString($rssClient->get($url));
-
-            $parsedResult = json_decode(
-                json_encode($feedResult),
-                true
-            );
-
-            $items = $this->arrays->getValue(
-                $parsedResult,
-                'channel:item'
-            );
-
-            if ($this->arrays->isAssociative($items)) {
-                $items = [$items];
-            }
-
-            foreach ($items as $item) {
-                $title = $this->arrays->getValue(
-                    $item,
-                    'title'
-                );
-
-                if (! $this->variables->isEmpty($title) && preg_match(
-                        '/(.*?)\s+\((.*?)\)/',
-                        $title,
-                        $matches
-                    )) {
-
-                    $pubDate = strtotime(
-                        trim(
-                            $this->arrays->getValue(
-                                $item,
-                                'pubDate'
-                            )
-                        )
-                    );
-
-                    if ($pubDate > $lastCheckTime) {
-                        $result[] = $matches[ 1 ];
-                    }
-                }
-            }
-        } catch (Exception $exception) {
-            $this->logging->error($exception);
-        }
-
-        return $result;
+        return $packages;
     }
 }

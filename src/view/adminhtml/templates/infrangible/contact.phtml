@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+use Infrangible\Foundation\Block\Adminhtml\Contact;
+use Magento\Framework\Escaper;
+
+/**
+ * @author      Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2026 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ */
+
+/** @var Contact $block */
+/** @var Escaper $escaper */
+?>
+<form class="infrangible-contact" action="<?= $escaper->escapeUrl($block->getSendUrl()) ?>" method="post">
+    <?= $block->getBlockHtml('formkey') ?>
+    <fieldset class="admin__fieldset">
+        <legend class="admin__legend">
+            <span><?= $escaper->escapeHtml(__('Your message to Infrangible')) ?></span>
+        </legend>
+        <p>
+            <?= $escaper->escapeHtml(
+                __(
+                    'The message is sent to %1. Replies go to the email address of your admin account.',
+                    $block->getRecipient()
+                )
+            ) ?>
+        </p>
+        <div class="admin__field _required">
+            <label class="admin__field-label" for="infrangible-contact-message">
+                <span><?= $escaper->escapeHtml(__('Message')) ?></span>
+            </label>
+            <div class="admin__field-control">
+                <textarea id="infrangible-contact-message" name="message" class="admin__control-textarea" rows="12"
+                          required maxlength="<?= (int)$block->getMaxMessageLength() ?>"
+                ><?= $escaper->escapeHtml($block->getMessage()) ?></textarea>
+            </div>
+        </div>
+        <div class="admin__field">
+            <div class="admin__field-control">
+                <button type="submit" class="action-primary">
+                    <span><?= $escaper->escapeHtml(__('Send')) ?></span>
+                </button>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset class="admin__fieldset">
+        <legend class="admin__legend">
+            <span><?= $escaper->escapeHtml(__('System information sent with the message')) ?></span>
+        </legend>
+        <pre class="infrangible-contact-system-information"><?=
+            $escaper->escapeHtml($block->getSystemInformation())
+        ?></pre>
+    </fieldset>
+</form>

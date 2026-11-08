@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+/**
+ * @author      Andreas Knollmann
+ * @copyright   Copyright (c) 2014-2026 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ */
+
 namespace Infrangible\Foundation\Command;
 
 use Magento\Framework\Encryption\EncryptorInterface;
@@ -12,21 +18,23 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * @author      Andreas Knollmann
- * @copyright   Copyright (c) 2014-2025 Softwareentwicklung Andreas Knollmann
- * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ * Console command that decrypts a value with the encryption key of the installation.
  */
 class Decrypt extends Command
 {
     /** command name */
     public const NAME = 'encryption:decrypt';
 
-    /** option which value to encrypt */
+    /** option which value to decrypt */
     public const OPTION_VALUE = 'value';
 
     /** @var EncryptorInterface */
-    protected $encryptor;
+    protected EncryptorInterface $encryptor;
 
+    /**
+     * @param EncryptorInterface $encryptor
+     * @param string|null $name
+     */
     public function __construct(EncryptorInterface $encryptor, ?string $name = null)
     {
         parent::__construct($name);
@@ -34,6 +42,9 @@ class Decrypt extends Command
         $this->encryptor = $encryptor;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function configure(): void
     {
         $this->setName(static::NAME)->setDescription('Decrypt value');
@@ -48,11 +59,19 @@ class Decrypt extends Command
         parent::configure();
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): void
+    /**
+     * Writes the decrypted value to the output.
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
+     * @throws RuntimeException if no value was given
+     */
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $value = $input->getOption(static::OPTION_VALUE);
 
-        if (empty($value)) {
+        if (! is_string($value) || $value === '') {
             throw new RuntimeException(
                 sprintf(
                     'Not enough arguments (missing: "%s").',
@@ -61,6 +80,11 @@ class Decrypt extends Command
             );
         }
 
-        echo $this->encryptor->decrypt($value);
+        $output->writeln(
+            $this->encryptor->decrypt($value),
+            OutputInterface::OUTPUT_RAW
+        );
+
+        return Command::SUCCESS;
     }
 }
