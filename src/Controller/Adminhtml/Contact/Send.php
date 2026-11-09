@@ -30,23 +30,17 @@ class Send extends Action implements HttpPostActionInterface
 
     public const DATA_PERSISTOR_KEY = 'infrangible_foundation_contact_message';
 
-    /** @var ContactMail */
-    protected ContactMail $contactMail;
-
-    /** @var DataPersistorInterface */
-    protected DataPersistorInterface $dataPersistor;
-
     /**
      * @param Context $context
      * @param ContactMail $contactMail
      * @param DataPersistorInterface $dataPersistor
      */
-    public function __construct(Context $context, ContactMail $contactMail, DataPersistorInterface $dataPersistor)
-    {
+    public function __construct(
+        Context $context,
+        protected ContactMail $contactMail,
+        protected DataPersistorInterface $dataPersistor
+    ) {
         parent::__construct($context);
-
-        $this->contactMail = $contactMail;
-        $this->dataPersistor = $dataPersistor;
     }
 
     /**

@@ -25,24 +25,6 @@ use Magento\Store\Model\StoreManagerInterface;
  */
 class SystemInformation
 {
-    /** @var ProductMetadataInterface */
-    protected ProductMetadataInterface $productMetadata;
-
-    /** @var State */
-    protected State $appState;
-
-    /** @var StoreManagerInterface */
-    protected StoreManagerInterface $storeManager;
-
-    /** @var ScopeConfigInterface */
-    protected ScopeConfigInterface $scopeConfig;
-
-    /** @var InstalledPackages */
-    protected InstalledPackages $installedPackages;
-
-    /** @var Variables */
-    protected Variables $variables;
-
     /**
      * @param ProductMetadataInterface $productMetadata
      * @param State $appState
@@ -52,19 +34,13 @@ class SystemInformation
      * @param Variables $variables
      */
     public function __construct(
-        ProductMetadataInterface $productMetadata,
-        State $appState,
-        StoreManagerInterface $storeManager,
-        ScopeConfigInterface $scopeConfig,
-        InstalledPackages $installedPackages,
-        Variables $variables
+        protected ProductMetadataInterface $productMetadata,
+        protected State $appState,
+        protected StoreManagerInterface $storeManager,
+        protected ScopeConfigInterface $scopeConfig,
+        protected InstalledPackages $installedPackages,
+        protected Variables $variables
     ) {
-        $this->productMetadata = $productMetadata;
-        $this->appState = $appState;
-        $this->storeManager = $storeManager;
-        $this->scopeConfig = $scopeConfig;
-        $this->installedPackages = $installedPackages;
-        $this->variables = $variables;
     }
 
     /**

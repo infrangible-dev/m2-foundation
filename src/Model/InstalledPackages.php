@@ -22,21 +22,6 @@ use Psr\Log\LoggerInterface;
  */
 class InstalledPackages
 {
-    /** @var FullModuleList */
-    protected FullModuleList $fullModuleList;
-
-    /** @var Reader */
-    protected Reader $moduleReader;
-
-    /** @var File */
-    protected File $file;
-
-    /** @var Json */
-    protected Json $json;
-
-    /** @var LoggerInterface */
-    protected LoggerInterface $logging;
-
     /**
      * @param FullModuleList $fullModuleList
      * @param Reader $moduleReader
@@ -45,17 +30,12 @@ class InstalledPackages
      * @param LoggerInterface $logging
      */
     public function __construct(
-        FullModuleList $fullModuleList,
-        Reader $moduleReader,
-        File $file,
-        Json $json,
-        LoggerInterface $logging
+        protected FullModuleList $fullModuleList,
+        protected Reader $moduleReader,
+        protected File $file,
+        protected Json $json,
+        protected LoggerInterface $logging
     ) {
-        $this->fullModuleList = $fullModuleList;
-        $this->moduleReader = $moduleReader;
-        $this->file = $file;
-        $this->json = $json;
-        $this->logging = $logging;
     }
 
     /**

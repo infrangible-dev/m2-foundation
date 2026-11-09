@@ -24,18 +24,15 @@ class Index extends Action implements HttpGetActionInterface
 {
     public const ADMIN_RESOURCE = 'Infrangible_Foundation::infrangible_solutions';
 
-    /** @var PageFactory */
-    protected PageFactory $resultPageFactory;
-
     /**
      * @param Context $context
      * @param PageFactory $resultPageFactory
      */
-    public function __construct(Context $context, PageFactory $resultPageFactory)
-    {
+    public function __construct(
+        Context $context,
+        protected PageFactory $resultPageFactory
+    ) {
         parent::__construct($context);
-
-        $this->resultPageFactory = $resultPageFactory;
     }
 
     /**

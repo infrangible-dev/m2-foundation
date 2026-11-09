@@ -31,20 +31,14 @@ class Packagist
 
     public const TIMEOUT = 10;
 
-    /** @var CurlFactory */
-    protected CurlFactory $curlFactory;
-
-    /** @var Json */
-    protected Json $json;
-
     /**
      * @param CurlFactory $curlFactory
      * @param Json $json
      */
-    public function __construct(CurlFactory $curlFactory, Json $json)
-    {
-        $this->curlFactory = $curlFactory;
-        $this->json = $json;
+    public function __construct(
+        protected CurlFactory $curlFactory,
+        protected Json $json
+    ) {
     }
 
     /**

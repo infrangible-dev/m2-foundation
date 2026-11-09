@@ -150,21 +150,15 @@ class InstalledPackagesTest extends TestCase
 
         $moduleReader = $this->createStub(Reader::class);
         $moduleReader->method('getModuleDir')->willReturnCallback(
-            function (string $type, string $moduleName) use ($modules): string {
-                return $modules[ $moduleName ];
-            }
+            fn(string $type, string $moduleName): string => $modules[ $moduleName ]
         );
 
         $file = $this->createStub(File::class);
         $file->method('isExists')->willReturnCallback(
-            function (string $path): bool {
-                return array_key_exists($path, $this->files);
-            }
+            fn(string $path): bool => array_key_exists($path, $this->files)
         );
         $file->method('fileGetContents')->willReturnCallback(
-            function (string $path): string {
-                return $this->files[ $path ];
-            }
+            fn(string $path): string => $this->files[ $path ]
         );
 
         $this->logging = $this->createMock(LoggerInterface::class);

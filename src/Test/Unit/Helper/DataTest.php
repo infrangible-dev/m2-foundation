@@ -72,9 +72,7 @@ class DataTest extends TestCase
         $flagManager = $this->createStub(FlagManager::class);
 
         $flagManager->method('getFlagData')->willReturnCallback(
-            function (string $code) {
-                return $this->flags[ $code ] ?? null;
-            }
+            fn(string $code) => $this->flags[ $code ] ?? null
         );
         $flagManager->method('saveFlag')->willReturnCallback(
             function (string $code, $value): bool {

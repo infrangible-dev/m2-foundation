@@ -28,18 +28,15 @@ class Encrypt extends Command
     /** option which value to encrypt */
     public const OPTION_VALUE = 'value';
 
-    /** @var EncryptorInterface */
-    protected EncryptorInterface $encryptor;
-
     /**
      * @param EncryptorInterface $encryptor
      * @param string|null $name
      */
-    public function __construct(EncryptorInterface $encryptor, ?string $name = null)
-    {
+    public function __construct(
+        protected EncryptorInterface $encryptor,
+        ?string $name = null
+    ) {
         parent::__construct($name);
-
-        $this->encryptor = $encryptor;
     }
 
     /**

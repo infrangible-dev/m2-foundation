@@ -19,23 +19,21 @@ use Magento\Backend\Block\Template\Context;
  */
 class Solutions extends Template
 {
-    /** @var Data */
-    protected Data $helper;
-
     /**
      * @param Context $context
      * @param Data $helper
      * @param array $data
      * @phpstan-param array<string, mixed> $data
      */
-    public function __construct(Context $context, Data $helper, array $data = [])
-    {
+    public function __construct(
+        Context $context,
+        protected Data $helper,
+        array $data = []
+    ) {
         parent::__construct(
             $context,
             $data
         );
-
-        $this->helper = $helper;
     }
 
     /**

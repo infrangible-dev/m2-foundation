@@ -24,18 +24,15 @@ class Refresh extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Infrangible_Foundation::infrangible_solutions';
 
-    /** @var Data */
-    protected Data $helper;
-
     /**
      * @param Context $context
      * @param Data $helper
      */
-    public function __construct(Context $context, Data $helper)
-    {
+    public function __construct(
+        Context $context,
+        protected Data $helper
+    ) {
         parent::__construct($context);
-
-        $this->helper = $helper;
     }
 
     /**

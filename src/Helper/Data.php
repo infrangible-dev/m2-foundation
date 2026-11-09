@@ -33,18 +33,6 @@ class Data
     /** order of the statuses in the list: outdated packages first, missing packages last */
     public const STATUS_ORDER = [self::STATUS_OUTDATED => 0, self::STATUS_OK => 1, self::STATUS_MISSING => 2];
 
-    /** @var Packagist */
-    protected Packagist $packagist;
-
-    /** @var InstalledPackages */
-    protected InstalledPackages $installedPackages;
-
-    /** @var FlagManager */
-    protected FlagManager $flagManager;
-
-    /** @var LoggerInterface */
-    protected LoggerInterface $logging;
-
     /**
      * @param Packagist $packagist
      * @param InstalledPackages $installedPackages
@@ -52,15 +40,11 @@ class Data
      * @param LoggerInterface $logging
      */
     public function __construct(
-        Packagist $packagist,
-        InstalledPackages $installedPackages,
-        FlagManager $flagManager,
-        LoggerInterface $logging
+        protected Packagist $packagist,
+        protected InstalledPackages $installedPackages,
+        protected FlagManager $flagManager,
+        protected LoggerInterface $logging
     ) {
-        $this->packagist = $packagist;
-        $this->installedPackages = $installedPackages;
-        $this->flagManager = $flagManager;
-        $this->logging = $logging;
     }
 
     /**
@@ -91,10 +75,9 @@ class Data
 
         usort(
             $items,
-            function (array $item1, array $item2) {
-                return [static::STATUS_ORDER[ $item1[ 'status' ] ], strtotime($item2[ 'time' ]) ?: 0] <=>
-                    [static::STATUS_ORDER[ $item2[ 'status' ] ], strtotime($item1[ 'time' ]) ?: 0];
-            }
+            fn(array $item1, array $item2): int =>
+                [static::STATUS_ORDER[ $item1[ 'status' ] ], strtotime($item2[ 'time' ]) ?: 0] <=>
+                [static::STATUS_ORDER[ $item2[ 'status' ] ], strtotime($item1[ 'time' ]) ?: 0]
         );
 
         return $items;

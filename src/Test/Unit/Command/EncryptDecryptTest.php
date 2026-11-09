@@ -34,14 +34,10 @@ class EncryptDecryptTest extends TestCase
         $encryptor = $this->createStub(EncryptorInterface::class);
 
         $encryptor->method('encrypt')->willReturnCallback(
-            function (string $value): string {
-                return 'encrypted:' . $value;
-            }
+            fn(string $value): string => 'encrypted:' . $value
         );
         $encryptor->method('decrypt')->willReturnCallback(
-            function (string $value): string {
-                return substr($value, strlen('encrypted:'));
-            }
+            fn(string $value): string => substr($value, strlen('encrypted:'))
         );
 
         return $encryptor;

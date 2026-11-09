@@ -22,12 +22,6 @@ use Magento\Framework\App\Request\DataPersistorInterface;
  */
 class Contact extends Template
 {
-    /** @var SystemInformation */
-    protected SystemInformation $systemInformation;
-
-    /** @var DataPersistorInterface */
-    protected DataPersistorInterface $dataPersistor;
-
     /**
      * @param Context $context
      * @param SystemInformation $systemInformation
@@ -37,17 +31,14 @@ class Contact extends Template
      */
     public function __construct(
         Context $context,
-        SystemInformation $systemInformation,
-        DataPersistorInterface $dataPersistor,
+        protected SystemInformation $systemInformation,
+        protected DataPersistorInterface $dataPersistor,
         array $data = []
     ) {
         parent::__construct(
             $context,
             $data
         );
-
-        $this->systemInformation = $systemInformation;
-        $this->dataPersistor = $dataPersistor;
     }
 
     /**

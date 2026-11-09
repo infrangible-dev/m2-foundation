@@ -23,21 +23,6 @@ class Cron
 {
     public const FLAG_CHECK_TIME = 'infrangible_foundation_check_time';
 
-    /** @var Packagist */
-    protected Packagist $packagist;
-
-    /** @var Data */
-    protected Data $helper;
-
-    /** @var FlagManager */
-    protected FlagManager $flagManager;
-
-    /** @var InboxFactory */
-    protected InboxFactory $inboxFactory;
-
-    /** @var LoggerInterface */
-    protected LoggerInterface $logging;
-
     /**
      * @param Packagist $packagist
      * @param Data $helper
@@ -46,17 +31,12 @@ class Cron
      * @param LoggerInterface $logging
      */
     public function __construct(
-        Packagist $packagist,
-        Data $helper,
-        FlagManager $flagManager,
-        InboxFactory $inboxFactory,
-        LoggerInterface $logging
+        protected Packagist $packagist,
+        protected Data $helper,
+        protected FlagManager $flagManager,
+        protected InboxFactory $inboxFactory,
+        protected LoggerInterface $logging
     ) {
-        $this->packagist = $packagist;
-        $this->helper = $helper;
-        $this->flagManager = $flagManager;
-        $this->inboxFactory = $inboxFactory;
-        $this->logging = $logging;
     }
 
     /**

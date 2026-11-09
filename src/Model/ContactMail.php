@@ -35,18 +35,6 @@ class ContactMail
 
     public const XML_PATH_EMAIL_DISABLED = 'system/smtp/disable';
 
-    /** @var TransportBuilder */
-    protected TransportBuilder $transportBuilder;
-
-    /** @var StateInterface */
-    protected StateInterface $inlineTranslation;
-
-    /** @var SystemInformation */
-    protected SystemInformation $systemInformation;
-
-    /** @var ScopeConfigInterface */
-    protected ScopeConfigInterface $scopeConfig;
-
     /**
      * @param TransportBuilder $transportBuilder
      * @param StateInterface $inlineTranslation
@@ -54,15 +42,11 @@ class ContactMail
      * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
-        TransportBuilder $transportBuilder,
-        StateInterface $inlineTranslation,
-        SystemInformation $systemInformation,
-        ScopeConfigInterface $scopeConfig
+        protected TransportBuilder $transportBuilder,
+        protected StateInterface $inlineTranslation,
+        protected SystemInformation $systemInformation,
+        protected ScopeConfigInterface $scopeConfig
     ) {
-        $this->transportBuilder = $transportBuilder;
-        $this->inlineTranslation = $inlineTranslation;
-        $this->systemInformation = $systemInformation;
-        $this->scopeConfig = $scopeConfig;
     }
 
     /**
