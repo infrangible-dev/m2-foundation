@@ -26,6 +26,7 @@ use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\User\Model\User;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -137,36 +138,31 @@ class SendTest extends TestCase
     }
 
     /**
-     * If the mail cannot be sent, the message is kept and a hint to the mail configuration is shown.
+     * Provides errors of sending the mail: of the Magento mail transport, and others, for example of an SMTP module.
      *
-     * @return void
-     * @throws NotFoundException
+     * @return array<string, array{\Exception}>
      */
-    public function testMailError(): void
+    public static function provideMailErrors(): array
     {
-        $exception = new MailException(__('SMTP error'));
-
-        $this->request->method('getParam')->willReturn('Hello');
-        $this->contactMail->method('send')->willThrowException($exception);
-        $this->dataPersistor->expects($this->once())->method('set')->with(Send::DATA_PERSISTOR_KEY, 'Hello');
-        $this->messageManager->expects($this->once())
-            ->method('addExceptionMessage')
-            ->with($exception, 'The message could not be sent. Please check the mail configuration of the shop.');
-        $this->expectRedirectToForm();
-
-        $this->assertSame($this->redirect, $this->controller->execute());
+        return [
+            'mail error'       => [new MailException(__('SMTP error'))],
+            'unexpected error' => [new \RuntimeException('Connection refused')]
+        ];
     }
 
     /**
-     * Other errors, for example of an SMTP module, are shown with a hint to the mail configuration.
+     * If the mail cannot be sent, the message is kept and a hint to the mail configuration is shown.
+     *
+     * @dataProvider provideMailErrors
+     *
+     * @param \Exception $exception
      *
      * @return void
      * @throws NotFoundException
      */
-    public function testUnexpectedError(): void
+    #[DataProvider('provideMailErrors')]
+    public function testMailError(\Exception $exception): void
     {
-        $exception = new \RuntimeException('Connection refused');
-
         $this->request->method('getParam')->willReturn('Hello');
         $this->contactMail->method('send')->willThrowException($exception);
         $this->dataPersistor->expects($this->once())->method('set')->with(Send::DATA_PERSISTOR_KEY, 'Hello');
