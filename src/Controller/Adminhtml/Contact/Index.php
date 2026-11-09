@@ -50,7 +50,7 @@ class Index extends Action implements HttpGetActionInterface
             $resultPage->setActiveMenu('Infrangible_Foundation::infrangible_contact');
         }
 
-        $resultPage->getConfig()->getTitle()->prepend(__('Contact Infrangible'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Contact Infrangible')->render());
 
         return $resultPage;
     }
