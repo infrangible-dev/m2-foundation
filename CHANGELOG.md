@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.1
+
+### Changed
+
+- Dependencies only allow patch releases of the tested minor versions (`~X.Y.Z`): `fewedev/base` 2.4, `psr/log` 1.1,
+  2.0 or 3.0, `symfony/console` 5.4, 6.4 or 7.4.
+- PHPStan checks with the real Magento factories instead of the stubs of the Magento test framework.
+
 ## 3.0.0
 
 ### Breaking changes

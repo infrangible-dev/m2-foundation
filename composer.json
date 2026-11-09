@@ -2,7 +2,7 @@
     "name": "infrangible/m2-foundation",
     "description": "Infrangible Magento 2 Foundation",
     "type": "magento2-module",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "license": "MIT",
     "keywords": [
         "Magento"
@@ -23,7 +23,7 @@
         "ext-mbstring": "*",
         "ext-simplexml": "*",
         "composer-runtime-api": "^2.0",
-        "fewedev/base": "^2.4",
+        "fewedev/base": "~2.4.0",
         "magento/framework": "~103.0.6",
         "magento/module-admin-notification": "~100.4.0",
         "magento/module-backend": "~102.0.0",
@@ -32,8 +32,8 @@
         "magento/module-email": "~101.1.0",
         "magento/module-store": "~101.1.0",
         "magento/module-user": "~101.2.0",
-        "psr/log": "^1.1 || ^2.0 || ^3.0",
-        "symfony/console": "^5.4 || ^6.4 || ^7.4"
+        "psr/log": "~1.1.0||~2.0.0||~3.0.0",
+        "symfony/console": "~5.4.0||~6.4.0||~7.4.0"
     },
     "autoload": {
         "files": [
