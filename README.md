@@ -13,7 +13,7 @@ Base module for the Infrangible Magento 2 modules. It provides:
 ## Requirements
 
 - Magento Open Source or Adobe Commerce 2.4.6 or newer
-- PHP 8.2 or newer
+- PHP 8.1 or newer
 - Outgoing HTTPS connections to `packagist.org` and `repo.packagist.org` (only for the solutions page and the cron job)
 - A working mail setup of the shop (only for the contact form)
 
@@ -116,7 +116,7 @@ ads rise
 The shop is then available at `https://dev.infrangible.dev/`. Run the checks in the `cli` container:
 
 ```bash
-# coding standard (Magento2 and PHP 8.2 compatibility)
+# coding standard (Magento2 and PHP 8.1 compatibility)
 cd /var/www/module && /var/www/magento/vendor/bin/phpcs
 
 # static analysis (PHPStan level 9)
@@ -150,8 +150,8 @@ not from `/var/www/module/src`. With PHPUnit 9 (Magento 2.4.6), use `--whitelist
 
 ### Continuous integration and releases
 
-Every push and pull request runs the checks above on GitHub Actions with Magento 2.4.6 (PHP 8.2), 2.4.7 (PHP 8.3),
-2.4.8 (PHP 8.4) and 2.4.9 (PHP 8.5), using the shared workflow of
+Every push and pull request runs the checks above on GitHub Actions with Magento 2.4.6 (PHP 8.1), 2.4.7 (PHP 8.2),
+2.4.8 (PHP 8.3 and 8.4) and 2.4.9 (PHP 8.5), using the shared workflow of
 [infrangible-dev/workflows](https://github.com/infrangible-dev/workflows). Outside the development environment, the
 PHPStan and PHPUnit configuration find Magento through the environment variable `MAGENTO_ROOT`.
 

@@ -2,7 +2,7 @@
     "name": "infrangible/m2-foundation",
     "description": "Base module of all Infrangible modules: adds the Infrangible admin menu, an overview of all Infrangible modules with update notifications, and a contact form.",
     "type": "magento2-module",
-    "version": "3.0.1",
+    "version": "3.0.2",
     "license": "MIT",
     "keywords": [
         "Magento",
@@ -20,7 +20,7 @@
         }
     ],
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.1",
         "ext-intl": "*",
         "ext-libxml": "*",
         "ext-mbstring": "*",
